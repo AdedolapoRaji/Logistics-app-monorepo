@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_CREDS_ID = 'dockerhub-token' // Matches your exact Jenkins credential ID
+        DOCKER_CREDS_ID = 'dockerhub-token' // Your Secret Text credential ID
         DOCKER_REGISTRY = 'adedolapo05'
     }
     
@@ -16,12 +16,12 @@ pipeline {
         stage('Build & Containerize Services') {
             steps {
                 script {
-                    // Define all 4 of your Java services
                     def services = ['order-service', 'driver-service', 'notification-service', 'tracking-service']
                     
-                    // Log into Docker Hub once before running the loop
-                    withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USER --password-stdin"
+                    // Correctly binding 'Secret text' to an environment variable token
+                    withCredentials([string(credentialsId: env.DOCKER_CREDS_ID, variable: 'DOCKER_TOKEN')]) {
+                        // Pass your username string and use the secret variable token to log in
+                        sh "echo \$DOCKER_TOKEN | docker login -u ${env.DOCKER_REGISTRY} --password-stdin"
                     }
                     
                     // Loop through each folder to clean, build, and push
@@ -47,7 +47,6 @@ pipeline {
 
         stage('Trigger Deployment') {
             steps {
-                // Once all 4 images are pushed, trigger your CD job
                 build job: 'logistics-cd-pipeline', parameters: [
                     string(name: 'BUILD_NUM', value: "${env.BUILD_NUMBER}")
                 ]

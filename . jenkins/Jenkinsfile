@@ -1,14 +1,16 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_CREDS_ID = 'dockerhub-token' // Your Secret Text credential ID
-        DOCKER_REGISTRY = 'adedolapo05'
+        DOCKER_REGISTRY_USER = 'adedolapo05'
+        // This links directly to your Jenkins credentials provider block ID
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials' 
     }
-    
+
     stages {
         stage('Checkout Source') {
             steps {
+                // Pulls down your latest monorepo structure from GitHub
                 checkout scm
             }
         }
@@ -16,41 +18,57 @@ pipeline {
         stage('Build & Containerize Services') {
             steps {
                 script {
-                    def services = ['order-service', 'driver-service', 'notification-service', 'tracking-service']
+                    // Defined all 5 components of your monorepo architecture
+                    def services = [
+                        'order-service', 
+                        'driver-service', 
+                        'notification-service', 
+                        'tracking-service', 
+                        'frontend'
+                    ]
                     
-                    // Correctly binding 'Secret text' to an environment variable token
-                    withCredentials([string(credentialsId: env.DOCKER_CREDS_ID, variable: 'DOCKER_TOKEN')]) {
-                        // Pass your username string and use the secret variable token to log in
-                        sh "echo \$DOCKER_TOKEN | docker login -u ${env.DOCKER_REGISTRY} --password-stdin"
-                    }
-                    
-                    // Loop through each folder to clean, build, and push
-                    for (service in services) {
-                        echo "--------------------------------------------------------"
-                        echo "Processing: ${service.toUpperCase()}"
-                        echo "--------------------------------------------------------"
+                    // Securely open a connection context with Docker Hub
+                    withCredentials([string(credentialsId: env.DOCKER_CREDENTIALS_ID, variable: 'DOCKER_TOKEN')]) {
+                        sh "echo \$DOCKER_TOKEN | docker login -u ${env.DOCKER_REGISTRY_USER} --password-stdin"
                         
-                        dir("${service}") {
-                            // 1. Build the Jar local to its service directory
-                            sh "mvn clean test"
+                        for (service in services) {
+                            echo "--------------------------------------------------------"
+                            echo "Processing Service Layer: ${service.toUpperCase()}"
+                            echo "--------------------------------------------------------"
                             
-                            // 2. Build the Docker image using the corrected Eclipse Temurin base image
-                            sh "docker build -t ${env.DOCKER_REGISTRY}/${service}:${env.BUILD_NUMBER} ."
+                            // Condition block: Only compile using Maven if it's a backend Java app
+                            if (service != 'frontend') {
+                                dir("${service}") {
+                                    sh "mvn clean package -DskipTests"
+                                }
+                            }
                             
-                            // 3. Push to your Docker Hub repository
-                            sh "docker push ${env.DOCKER_REGISTRY}/${service}:${env.BUILD_NUMBER}"
+                            // Build and push the container images for everything including the frontend
+                            dir("${service}") {
+                                sh "docker build -t ${env.DOCKER_REGISTRY_USER}/${service}:${BUILD_NUMBER} ."
+                                sh "docker push ${env.DOCKER_REGISTRY_USER}/${service}:${BUILD_NUMBER}"
+                            }
                         }
                     }
                 }
             }
         }
 
-        stage('Trigger Deployment') {
+        stage('Trigger CD Deployment') {
             steps {
+                echo "Synchronizing downstream build pipeline hooks..."
+                // Pass the unique execution build integer to your continuous delivery pipeline
                 build job: 'logistics-cd-pipeline', parameters: [
-                    string(name: 'BUILD_NUM', value: "${env.BUILD_NUMBER}")
-                ]
+                    string(name: 'BUILD_NUM', value: "${BUILD_NUMBER}")
+                ], wait: false
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline clearing active build processes... Finished execution."
+            sh "docker logout"
         }
     }
 }

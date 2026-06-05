@@ -10,32 +10,24 @@ pipeline {
         stage('Deploy All Services') {
             steps {
                 script {
-                    // Define map of all 4 services and their respective target runtime ports
                     def services = [
                         'order-service': '5001',
-                        'driver-service': '8082', // Adjust if your driver service uses a different port
-                        'notification-service': '5002', // Adjust if your notification service uses a different port
-                        'tracking-service': '5003'
+                        'driver-service': '5002',
+                        'tracking-service': '5003',
+                        'notification-service': '5004'
                     ]
                     
-                    // Loop through each service and deploy it natively via Docker
                     services.each { serviceName, port ->
                         echo "--------------------------------------------------------"
                         echo "Deploying ${serviceName} (Version: ${params.BUILD_NUM}) on Port: ${port}"
                         echo "--------------------------------------------------------"
                         
-                        // 1. Pull down the fresh image version from your Docker Hub registry
                         sh "docker pull ${DOCKER_REGISTRY}/${serviceName}:${params.BUILD_NUM}"
-                        
-                        // 2. Safely tear down the old running instance if it exists
                         sh "docker stop ${serviceName} || true"
                         sh "docker rm ${serviceName} || true"
-                        
-                        // 3. Spin up the new container version on its assigned port
                         sh "docker run -d --name ${serviceName} -p ${port}:${port} ${DOCKER_REGISTRY}/${serviceName}:${params.BUILD_NUM}"
                     }
-                    
-                    echo "All 4 microservices have been successfully deployed!"
+                    echo "All 4 microservices have been successfully deployed via SCM!"
                 }
             }
         }

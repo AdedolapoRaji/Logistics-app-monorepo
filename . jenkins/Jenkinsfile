@@ -20,9 +20,10 @@ pipeline {
         }
         stage('Containerize Architecture') {
             steps {
-                // Using standard environment binding to handle the credentials safely
-                withCredentials([usernamePassword(credentialsId: "${REGISTRY_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                // This correctly binds your 'Secret text' token to an environment variable
+                withCredentials([string(credentialsId: "${REGISTRY_CREDENTIALS_ID}", variable: 'DOCKER_TOKEN')]) {
+                    // Log in using your hardcoded username and the secure token variable
+                    sh "echo \$DOCKER_TOKEN | docker login -u ${DOCKER_REGISTRY} --password-stdin"
                     
                     echo "Building Docker Image..."
                     sh "docker build -t ${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER} ./order-service"

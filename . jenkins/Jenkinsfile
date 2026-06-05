@@ -1,1 +1,40 @@
-
+pipeline {
+    agent any
+    environment {
+        DOCKER_REGISTRY = 'adedolapo05'
+        REGISTRY_CREDENTIALS_ID = 'dockerhub-token'
+    }
+    stages {
+        stage('Source Inspection') {
+            steps {
+                echo 'Checking Repository Layout...'
+                checkout scm
+            }
+        }
+        stage('Build & Test Services') {
+            steps {
+                dir('order-service') {
+                    sh 'mvn clean test'
+                }
+            }
+        }
+        stage('Containerize Architecture') {
+            steps {
+                script {
+                    // This uses your 'dockerhub-token' ID from the screenshot to authenticate securely
+                    docker.withRegistry('', REGISTRY_CREDENTIALS_ID) {
+                        def orderImage = docker.build("${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER}", "./order-service")
+                        orderImage.push()
+                    }
+                }
+            }
+        }
+        stage('Trigger Deployment') {
+            steps {
+                build job: 'logistics-cd-pipeline', parameters: [
+                    string(name: 'BUILD_NUM', value: "${BUILD_NUMBER}")
+                ]
+            }
+        }
+    }
+}

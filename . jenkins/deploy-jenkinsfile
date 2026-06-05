@@ -4,6 +4,12 @@ pipeline {
         string(name: 'BUILD_NUM', description: 'Target image version tag to roll out')
     }
     stages {
+        stage('Checkout Source') {
+            steps {
+                // Pulls down the repository so Jenkins can find your docker-compose.yml file
+                checkout scm
+            }
+        }
         stage('Deploy All Services with Compose') {
             steps {
                 // This passes Jenkins's BUILD_NUM to the docker-compose file

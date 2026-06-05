@@ -20,12 +20,15 @@ pipeline {
         }
         stage('Containerize Architecture') {
             steps {
-                script {
-                    // This uses your 'dockerhub-token' ID from the screenshot to authenticate securely
-                    docker.withRegistry('', REGISTRY_CREDENTIALS_ID) {
-                        def orderImage = docker.build("${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER}", "./order-service")
-                        orderImage.push()
-                    }
+                // Using standard environment binding to handle the credentials safely
+                withCredentials([usernamePassword(credentialsId: "${REGISTRY_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                    
+                    echo "Building Docker Image..."
+                    sh "docker build -t ${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER} ./order-service"
+                    
+                    echo "Pushing Image to Docker Hub..."
+                    sh "docker push ${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER}"
                 }
             }
         }

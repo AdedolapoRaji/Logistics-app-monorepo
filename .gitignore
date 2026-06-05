@@ -1,1 +1,4 @@
-
+**/target/
+*.jar
+*.war
+.DS_Store

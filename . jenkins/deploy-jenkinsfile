@@ -3,31 +3,20 @@ pipeline {
     parameters {
         string(name: 'BUILD_NUM', description: 'Target image version tag to roll out')
     }
-    environment {
-        DOCKER_REGISTRY = 'adedolapo05'
-    }
     stages {
-        stage('Deploy All Services') {
+        stage('Deploy All Services with Compose') {
             steps {
-                script {
-                    def services = [
-                        'order-service': '5001',
-                        'driver-service': '5002',
-                        'tracking-service': '5003',
-                        'notification-service': '5004'
-                    ]
+                // This passes Jenkins's BUILD_NUM to the docker-compose file
+                withEnv(["BUILD_NUM=${params.BUILD_NUM}"]) {
+                    echo "Deploying logistics stack version ${env.BUILD_NUM} via Docker Compose..."
                     
-                    services.each { serviceName, port ->
-                        echo "--------------------------------------------------------"
-                        echo "Deploying ${serviceName} (Version: ${params.BUILD_NUM}) on Port: ${port}"
-                        echo "--------------------------------------------------------"
-                        
-                        sh "docker pull ${DOCKER_REGISTRY}/${serviceName}:${params.BUILD_NUM}"
-                        sh "docker stop ${serviceName} || true"
-                        sh "docker rm ${serviceName} || true"
-                        sh "docker run -d --name ${serviceName} -p ${port}:${port} ${DOCKER_REGISTRY}/${serviceName}:${params.BUILD_NUM}"
-                    }
-                    echo "All 4 microservices have been successfully deployed via SCM!"
+                    // 1. Pull the fresh images from Docker Hub that match the build number
+                    sh "docker compose pull"
+                    
+                    // 2. Stop old containers and start the new ones instantly
+                    sh "docker compose up -d"
+                    
+                    echo "All microservices successfully orchestrated!"
                 }
             }
         }

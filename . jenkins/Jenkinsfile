@@ -1,42 +1,55 @@
 pipeline {
     agent any
+    
     environment {
+        DOCKER_CREDS_ID = 'dockerhub-token' // Matches your exact Jenkins credential ID
         DOCKER_REGISTRY = 'adedolapo05'
-        REGISTRY_CREDENTIALS_ID = 'dockerhub-token'
     }
+    
     stages {
-        stage('Source Inspection') {
+        stage('Checkout Source') {
             steps {
-                echo 'Checking Repository Layout...'
                 checkout scm
             }
         }
-        stage('Build & Test Services') {
+
+        stage('Build & Containerize Services') {
             steps {
-                dir('order-service') {
-                    sh 'mvn clean test'
+                script {
+                    // Define all 4 of your Java services
+                    def services = ['order-service', 'driver-service', 'notification-service', 'tracking-service']
+                    
+                    // Log into Docker Hub once before running the loop
+                    withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USER --password-stdin"
+                    }
+                    
+                    // Loop through each folder to clean, build, and push
+                    for (service in services) {
+                        echo "--------------------------------------------------------"
+                        echo "Processing: ${service.toUpperCase()}"
+                        echo "--------------------------------------------------------"
+                        
+                        dir("${service}") {
+                            // 1. Build the Jar local to its service directory
+                            sh "mvn clean test"
+                            
+                            // 2. Build the Docker image using the corrected Eclipse Temurin base image
+                            sh "docker build -t ${env.DOCKER_REGISTRY}/${service}:${env.BUILD_NUMBER} ."
+                            
+                            // 3. Push to your Docker Hub repository
+                            sh "docker push ${env.DOCKER_REGISTRY}/${service}:${env.BUILD_NUMBER}"
+                        }
+                    }
                 }
             }
         }
-        stage('Containerize Architecture') {
-            steps {
-                // This correctly binds your 'Secret text' token to an environment variable
-                withCredentials([string(credentialsId: "${REGISTRY_CREDENTIALS_ID}", variable: 'DOCKER_TOKEN')]) {
-                    // Log in using your hardcoded username and the secure token variable
-                    sh "echo \$DOCKER_TOKEN | docker login -u ${DOCKER_REGISTRY} --password-stdin"
-                    
-                    echo "Building Docker Image..."
-                    sh "docker build -t ${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER} ./order-service"
-                    
-                    echo "Pushing Image to Docker Hub..."
-                    sh "docker push ${DOCKER_REGISTRY}/order-service:${BUILD_NUMBER}"
-                }
-            }
-        }
+
         stage('Trigger Deployment') {
             steps {
+                // Once all 4 images are pushed, trigger your CD job
                 build job: 'logistics-cd-pipeline', parameters: [
-                    string(name: 'BUILD_NUM', value: "${BUILD_NUMBER}")
+                    string(name: 'BUILD_NUM', value: "${env.BUILD_NUMBER}")
                 ]
             }
         }

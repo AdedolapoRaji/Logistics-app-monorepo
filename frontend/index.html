@@ -1,1 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Ops Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <header class="bg-gray-800 border-b border-gray-700 p-5 shadow-lg">
+        <h1 class="text-2xl font-bold text-emerald-400 tracking-wide">🚚 Global Logistics Ops Control</h1>
+    </header>
 
+    <main class="p-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-sm">
+            <h2 class="text-xl font-semibold mb-4 text-emerald-300">Book New Consignment</h2>
+            <div class="space-y-4">
+                <input id="item" type="text" placeholder="Item Name" class="w-full bg-gray-700 p-3 rounded border border-gray-600 focus:outline-none focus:border-emerald-400">
+                <input id="destination" type="text" placeholder="Destination Address" class="w-full bg-gray-700 p-3 rounded border border-gray-600 focus:outline-none focus:border-emerald-400">
+                <button onclick="createOrder()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold p-3 rounded transition duration-200">Dispatch Order</button>
+            </div>
+            <div id="orderResponse" class="mt-4 text-sm text-gray-400 font-mono"></div>
+        </section>
+
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-sm">
+            <h2 class="text-xl font-semibold mb-4 text-emerald-300">Available Active Fleet</h2>
+            <button onclick="fetchDrivers()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition mb-4">Scan Fleet</button>
+            <ul id="driverList" class="space-y-2"></ul>
+        </section>
+
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-sm md:col-span-2">
+            <h2 class="text-xl font-semibold mb-4 text-emerald-300">Live Telemetry Tracking</h2>
+            <div class="flex gap-4 mb-4">
+                <input id="trackId" type="text" placeholder="Enter Order ID" class="bg-gray-700 p-3 rounded border border-gray-600 w-2/3">
+                <button onclick="trackOrder()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 rounded w-1/3">Locate Asset</button>
+            </div>
+            <div id="trackingOutput" class="bg-gray-950 p-4 rounded border border-gray-700 min-h-[80px] font-mono text-sm text-purple-400"></div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

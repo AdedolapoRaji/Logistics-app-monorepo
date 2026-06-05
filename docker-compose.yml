@@ -1,1 +1,37 @@
+version: '3.8'
 
+services:
+  order-service:
+    build: ./order-service
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+
+  driver-service:
+    build: ./driver-service
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+
+  tracking-service:
+    build: ./tracking-service
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "5004:5004"
+    environment:
+      - PORT=5004
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html

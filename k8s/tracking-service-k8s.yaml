@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: tracking-service
-        image: adedolapo05/tracking-service:latest
+        image: adedolapo05/tracking-service:26
         ports:
         - containerPort: 8080
 ---

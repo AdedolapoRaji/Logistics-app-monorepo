@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: notification-service
-        image: adedolapo05/notification-service:latest
+        image: adedolapo05/notification-service:26
         ports:
         - containerPort: 8080
 ---

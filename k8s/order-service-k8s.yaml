@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: order-service
-        image: adedolapo05/order-service:latest
+        image: adedolapo05/order-service:26
         ports:
         - containerPort: 8080
 ---

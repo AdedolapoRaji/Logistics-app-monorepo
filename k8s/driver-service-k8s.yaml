@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: driver-service
-        image: adedolapo05/driver-service:latest
+        image: adedolapo05/driver-service:26
         ports:
         - containerPort: 8080
 ---

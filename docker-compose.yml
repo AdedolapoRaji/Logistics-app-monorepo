@@ -1,37 +1,40 @@
-		version: '3.8'
-		
-		services:
-		  order-service:
-		    build: ./order-service
-		    ports:
-		      - "5001:5001"
-		    environment:
-		      - PORT=5001
-		
-		  driver-service:
-		    build: ./driver-service
-		    ports:
-		      - "5002:5002"
-		    environment:
-		      - PORT=5002
-		
-		  tracking-service:
-		    build: ./tracking-service
-		    ports:
-		      - "5003:5003"
-		    environment:
-		      - PORT=5003
-		
-		  notification-service:
-		    build: ./notification-service
-		    ports:
-		      - "5004:5004"
-		    environment:
-		      - PORT=5004
-		
-		  frontend:
-		    image: nginx:alpine
-		    ports:
-		      - "8080:80"
-		    volumes:
-      - ./frontend:/usr/share/nginx/html
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: adedolapo05/logistics-frontend:local
+    ports:
+      - "80:80"
+    restart: always
+
+order-service:
+    image: adedolapo05/order-service:${BUILD_NUM:-latest}
+    container_name: order-service
+    ports:
+      - "5001:8080"
+    restart: always
+
+driver-service:
+    image: adedolapo05/driver-service:${BUILD_NUM:-latest}
+    container_name: driver-service
+    ports:
+      - "5002:8080"
+    restart: always
+
+tracking-service:
+    image: adedolapo05/tracking-service:${BUILD_NUM:-latest}
+    container_name: tracking-service
+    ports:
+      - "5003:8080"
+    restart: always
+
+notification-service:
+    image: adedolapo05/notification-service:${BUILD_NUM:-latest}
+    container_name: notification-service
+    ports:
+      - "5004:8080"
+    restart: always
+

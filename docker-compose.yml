@@ -2,12 +2,10 @@ version: '3.8'
 
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: adedolapo05/logistics-frontend:local
+    image: adedolapo05/frontend:${BUILD_NUM:-latest}
+    container_name: frontend
     ports:
-      - "80:80"
+      - "8080:80"
     restart: always
 
   order-service:
@@ -37,4 +35,3 @@ services:
     ports:
       - "5004:8080"
     restart: always
-

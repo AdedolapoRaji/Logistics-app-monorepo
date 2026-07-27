@@ -17,10 +17,10 @@ pipeline {
                     echo "Deploying logistics stack version ${env.BUILD_NUM} via Docker Compose..."
                     
                     // 1. Pull the fresh images from Docker Hub that match the build number
-                    sh "docker compose pull"
+                    sh "docker-compose pull"
                     
                     // 2. Stop old containers and start the new ones instantly
-                    sh "docker compose up -d"
+                    sh "docker-compose up -d"
                     
                     echo "All microservices successfully orchestrated!"
                 }
